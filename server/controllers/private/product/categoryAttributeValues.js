@@ -21,7 +21,7 @@ exports.getPaginatedCategoryAttributeValues = (req, res) => {
       const rowCount = countResult[0].count;
 
       db.query(
-        `SELECT cav.category_id, cav.attribute_id, cav.value_id, 
+        `SELECT cav.category_id, cav.attribute_id, cav.value_id, cav.id,
                 c.category_name, a.attribute_name, av.value_text
          FROM category_attribute_values cav
          JOIN categories c ON cav.category_id = c.category_id
@@ -68,37 +68,32 @@ exports.createCategoryAttributeValue = (req, res) => {
 };
 
 exports.updateCategoryAttributeValue = (req, res) => {
-  const { old_category_id, old_attribute_id, old_value_id } = req.params;
+  const { id } = req.params;
   const { category_id, attribute_id, value_id } = req.body;
 
   db.query(
-    `UPDATE category_attribute_values 
-     SET category_id = ?, attribute_id = ?, value_id = ? 
-     WHERE category_id = ? AND attribute_id = ? AND value_id = ?`,
-    [
-      category_id,
-      attribute_id,
-      value_id,
-      old_category_id,
-      old_attribute_id,
-      old_value_id,
-    ],
+    `UPDATE category_attribute_values
+     SET category_id = ?, attribute_id = ?, value_id = ?
+     WHERE id = ?`,
+    [category_id, attribute_id, value_id, id],
     (err, results) => {
       if (err) return handleDatabaseError(res, err);
-      if (results.affectedRows === 0)
+
+      if (results.affectedRows === 0) {
         return res.status(404).json({ message: "Mapping not found." });
+      }
       res.json({ message: "Mapping updated successfully." });
     }
   );
 };
 
 exports.deleteCategoryAttributeValue = (req, res) => {
-  const { category_id, attribute_id, value_id } = req.params;
+  const { id } = req.params;
 
   db.query(
     `DELETE FROM category_attribute_values 
-     WHERE category_id = ? AND attribute_id = ? AND value_id = ?`,
-    [category_id, attribute_id, value_id],
+     WHERE id = ?`,
+    [id],
     (err, results) => {
       if (err) return handleDatabaseError(res, err);
       if (results.affectedRows === 0)

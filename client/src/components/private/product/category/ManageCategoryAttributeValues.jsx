@@ -11,7 +11,7 @@ import CategoryAttributeValueForm from "@/components/private/product/category/Ca
 
 const ManageCategoryAttributeValues = () => {
   const [columns, setColumns] = useState([
-    { value: "mapping_id", label: "ID", visible: true },
+    { value: "id", label: "ID", visible: true },
     { value: "category_name", label: "Category", visible: true },
     { value: "attribute_name", label: "Attribute", visible: true },
     { value: "value_text", label: "Value", visible: true },
@@ -21,7 +21,7 @@ const ManageCategoryAttributeValues = () => {
     {
       header: "Mapping Information",
       columns: [
-        { accessorKey: "mapping_id", header: "ID" },
+        { accessorKey: "id", header: "ID" },
         { accessorKey: "category_name", header: "Category" },
         { accessorKey: "attribute_name", header: "Attribute" },
         { accessorKey: "value_text", header: "Value" },

@@ -1,9 +1,8 @@
-"use client";
-
-import { useEffect } from "react";
+import React, { useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
 import {
   createAttributeValue,
   updateAttributeValue,
@@ -33,19 +33,23 @@ const attributeValueSchema = z.object({
 });
 
 export default function AttributeValues({ type = "add", editData, onClose }) {
+  const defaultValues = useMemo(
+    () => ({
+      attribute_id: editData?.attribute_id ? String(editData.attribute_id) : "",
+      value_text: editData?.value_text ?? "",
+      unit_id: editData?.unit_id ? String(editData.unit_id) : null,
+    }),
+    [editData]
+  );
+
   const {
     register,
     handleSubmit,
-    reset,
     control,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(attributeValueSchema),
-    defaultValues: {
-      attribute_id: "",
-      value_text: "",
-      unit_id: null,
-    },
+    defaultValues,
   });
 
   const createMutation = useAppMutation(createAttributeValue, {
@@ -68,40 +72,20 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
     fetchAllAttributes
   );
 
-  useEffect(() => {
-    if (editData) {
-      reset({
-        attribute_id: editData.attribute_id
-          ? String(editData.attribute_id)
-          : "",
-        value_text: editData.value_text || "",
-        unit_id: editData.unit_id ? String(editData.unit_id) : null,
-      });
-    }
-  }, [editData, reset]);
-
   const onSubmit = (data) => {
     const payload = {
-      attribute_id: parseInt(data.attribute_id),
+      attribute_id: Number(data.attribute_id),
       value_text: data.value_text,
-      unit_id: data.unit_id ? parseInt(data.unit_id) : null,
+      unit_id: data.unit_id ? Number(data.unit_id) : null,
     };
 
-    if (type === "edit") {
+    if (type === "edit" && editData) {
       updateMutation.mutate(
         { id: editData.value_id, data: payload },
-        {
-          onSuccess: () => {
-            onClose?.(); // Close modal
-          },
-        }
+        { onSuccess: () => onClose?.() }
       );
     } else {
-      createMutation.mutate(payload, {
-        onSuccess: () => {
-          onClose?.(); // Close modal
-        },
-      });
+      createMutation.mutate(payload, { onSuccess: () => onClose?.() });
     }
   };
 
@@ -109,7 +93,7 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
 
   if (!attributesData.length) {
     return (
-      <div className="text-center text-gray-500 p-4">Loading attributes...</div>
+      <div className="text-center text-gray-500 p-4">Loading attributes…</div>
     );
   }
 
@@ -124,7 +108,7 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
           name="attribute_id"
           control={control}
           render={({ field }) => (
-            <Select value={field.value || ""} onValueChange={field.onChange}>
+            <Select value={field.value} onValueChange={field.onChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select attribute" />
               </SelectTrigger>
@@ -167,7 +151,7 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
           control={control}
           render={({ field }) => (
             <Select
-              value={field.value !== null ? String(field.value) : "null"}
+              value={field.value ?? "null"}
               onValueChange={(value) =>
                 field.onChange(value === "null" ? null : value)
               }
@@ -194,8 +178,8 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting
           ? type === "edit"
-            ? "Updating..."
-            : "Saving..."
+            ? "Updating…"
+            : "Saving…"
           : type === "edit"
             ? "Update Attribute Value"
             : "Save Attribute Value"}

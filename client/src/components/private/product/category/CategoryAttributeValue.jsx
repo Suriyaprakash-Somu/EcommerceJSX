@@ -1,9 +1,8 @@
-"use client";
-
-import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import React, { useMemo, useRef, useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
 import {
   createCategoryAttributeValue,
   updateCategoryAttributeValue,
@@ -30,6 +30,7 @@ import {
   fetchAllAttributeValues,
   attributeValuesQueryKeys,
 } from "@/lib/product/attributeValues";
+
 import { useAppMutation } from "@/hooks/useAppMutation";
 import { useAppQuery } from "@/hooks/useAppQuery";
 
@@ -44,18 +45,23 @@ export default function CategoryAttributeValueForm({
   editData,
   onClose,
 }) {
+  const defaultValues = useMemo(
+    () => ({
+      category_id: editData?.category_id ? String(editData.category_id) : "",
+      attribute_id: editData?.attribute_id ? String(editData.attribute_id) : "",
+      value_id: editData?.value_id ? String(editData.value_id) : "",
+    }),
+    [editData]
+  );
+
   const {
     handleSubmit,
-    reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: {
-      category_id: "",
-      attribute_id: "",
-      value_id: "",
-    },
+    defaultValues,
   });
 
   const createMutation = useAppMutation(createCategoryAttributeValue, {
@@ -82,34 +88,41 @@ export default function CategoryAttributeValueForm({
     fetchAllAttributeValues
   );
 
+  const selectedAttributeId = useWatch({ control, name: "attribute_id" });
+  const initialAttributeIdRef = useRef(
+    editData ? String(editData.attribute_id) : ""
+  );
+
   useEffect(() => {
-    if (type === "edit" && editData) {
-      reset({
-        category_id: editData.category_id ? String(editData.category_id) : "",
-        attribute_id: editData.attribute_id
-          ? String(editData.attribute_id)
-          : "",
-        value_id: editData.value_id ? String(editData.value_id) : "",
-      });
+    if (
+      selectedAttributeId &&
+      selectedAttributeId !== initialAttributeIdRef.current
+    ) {
+      setValue("value_id", "");
     }
-  }, [editData, type, reset]);
+  }, [selectedAttributeId, setValue]);
+
+  const attributeIdForFiltering =
+    selectedAttributeId || initialAttributeIdRef.current;
+
+  const filteredAttributeValues = attributeValuesData.filter(
+    (v) => String(v.attribute_id) === attributeIdForFiltering
+  );
 
   const onSubmit = (data) => {
     const payload = {
-      category_id: parseInt(data.category_id),
-      attribute_id: parseInt(data.attribute_id),
-      value_id: parseInt(data.value_id),
+      category_id: Number(data.category_id),
+      attribute_id: Number(data.attribute_id),
+      value_id: Number(data.value_id),
     };
 
-    if (type === "edit") {
+    if (type === "edit" && editData) {
       updateMutation.mutate(
-        { id: editData.mapping_id, data: payload },
+        { id: editData.id, data: payload },
         { onSuccess: () => onClose?.() }
       );
     } else {
-      createMutation.mutate(payload, {
-        onSuccess: () => onClose?.(),
-      });
+      createMutation.mutate(payload, { onSuccess: () => onClose?.() });
     }
   };
 
@@ -131,12 +144,9 @@ export default function CategoryAttributeValueForm({
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categoriesData.map((cat) => (
-                  <SelectItem
-                    key={cat.category_id}
-                    value={String(cat.category_id)}
-                  >
-                    {cat.category_name}
+                {categoriesData.map((c) => (
+                  <SelectItem key={c.category_id} value={String(c.category_id)}>
+                    {c.category_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -161,12 +171,12 @@ export default function CategoryAttributeValueForm({
                 <SelectValue placeholder="Select attribute" />
               </SelectTrigger>
               <SelectContent>
-                {attributesData.map((attr) => (
+                {attributesData.map((a) => (
                   <SelectItem
-                    key={attr.attribute_id}
-                    value={String(attr.attribute_id)}
+                    key={a.attribute_id}
+                    value={String(a.attribute_id)}
                   >
-                    {attr.attribute_name}
+                    {a.attribute_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -186,16 +196,26 @@ export default function CategoryAttributeValueForm({
           name="value_id"
           control={control}
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={!attributeIdForFiltering}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select value" />
               </SelectTrigger>
               <SelectContent>
-                {attributeValuesData.map((val) => (
-                  <SelectItem key={val.value_id} value={String(val.value_id)}>
-                    {val.value_text}
-                  </SelectItem>
-                ))}
+                {filteredAttributeValues.length ? (
+                  filteredAttributeValues.map((v) => (
+                    <SelectItem key={v.value_id} value={String(v.value_id)}>
+                      {v.value_text}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <div className="text-gray-400 text-sm p-2">
+                    No values available
+                  </div>
+                )}
               </SelectContent>
             </Select>
           )}

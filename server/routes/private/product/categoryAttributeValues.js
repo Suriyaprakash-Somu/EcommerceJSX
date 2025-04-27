@@ -3,7 +3,7 @@ const router = express.Router();
 const categoryAttributeValuesController = require("../../../controllers/private/product/categoryAttributeValues");
 
 router.get(
-  "/",
+  "/all",
   categoryAttributeValuesController.getAllCategoryAttributeValues
 );
 router.get(
