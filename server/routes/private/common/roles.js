@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const rolesController = require("../../controllers/private/roles");
+const rolesController = require("../../../controllers/private/common/roles");
 
 router.get("/", rolesController.getAllRoles);
 

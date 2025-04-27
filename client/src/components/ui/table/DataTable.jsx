@@ -37,6 +37,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const DataTable = ({
   tag,
@@ -96,8 +97,9 @@ const DataTable = ({
 
   const confirmDelete = async () => {
     try {
-      await onDelete(rowIdToDelete);
+      const response = await onDelete(rowIdToDelete);
       queryClient.invalidateQueries([tag]);
+      toast.success(response.message);
     } catch (error) {
       console.error("Delete failed:", error);
     } finally {
@@ -369,6 +371,9 @@ const DataTable = ({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription className="sr-only">
+              Confirm to delete this {title}
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             Are you sure you want to delete this item? This action cannot be

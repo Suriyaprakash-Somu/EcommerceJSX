@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createRole, rolesQueryKeys, updateRole } from "@/lib/roles/roles";
+import { createRole, rolesQueryKeys, updateRole } from "@/lib/common/roles";
 import { useAppMutation } from "@/hooks/useAppMutation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,13 +29,13 @@ export default function Roles({ type = "add", editData, onClose }) {
   });
 
   const createMutation = useAppMutation(createRole, {
-    invalidateQueries: rolesQueryKeys.tag,
+    invalidateQueries: [rolesQueryKeys.tag],
   });
 
   const updateMutation = useAppMutation(
     ({ id, data }) => updateRole(id, data),
     {
-      invalidateQueries: rolesQueryKeys.tag,
+      invalidateQueries: [rolesQueryKeys.tag],
     }
   );
 

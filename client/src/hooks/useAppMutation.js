@@ -8,12 +8,12 @@ export function useAppMutation(mutationFn, options = {}) {
     mutationFn,
     onSuccess: (data, variables, context) => {
       if (data?.message) {
-        toast.success(data.message); // ✅ backend controlled message
+        toast.success(data.message);
       } else if (options.successMessage) {
         toast.success(options.successMessage);
       }
 
-      options?.onSuccess?.(data, variables, context); // ✅ call extra custom logic if needed
+      options?.onSuccess?.(data, variables, context);
 
       if (options.invalidateQueries) {
         queryClient.refetchQueries({
@@ -23,7 +23,7 @@ export function useAppMutation(mutationFn, options = {}) {
     },
     onError: (error, variables, context) => {
       if (error?.response?.data?.message) {
-        toast.error(error.response.data.message); // ✅ backend error message
+        toast.error(error.response.data.message);
       } else if (options.errorMessage) {
         toast.error(options.errorMessage);
       } else {

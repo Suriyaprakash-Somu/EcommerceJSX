@@ -1,5 +1,5 @@
-const db = require("../../config/db");
-const { handleDatabaseError } = require("../../utils/errorHandler");
+const db = require("../../../config/db");
+const { handleDatabaseError } = require("../../../utils/errorHandler");
 
 exports.getAllRoles = (req, res) => {
   db.query("SELECT * FROM roles WHERE is_active = 1", (err, results) => {
@@ -85,7 +85,7 @@ exports.deleteRole = (req, res) => {
   const { id } = req.params;
 
   db.query(
-    "UPDATE roles SET is_active = 0 WHERE role_id = ?",
+    "DELETE FROM roles WHERE role_id = ?",
     [id],
     (err, results) => {
       if (err) return handleDatabaseError(res, err);
@@ -100,3 +100,24 @@ exports.deleteRole = (req, res) => {
     }
   );
 };
+
+
+// exports.deleteRole = (req, res) => {
+//   const { id } = req.params;
+
+//   db.query(
+//     "UPDATE roles SET is_active = 0 WHERE role_id = ?",
+//     [id],
+//     (err, results) => {
+//       if (err) return handleDatabaseError(res, err);
+
+//       if (results.affectedRows === 0) {
+//         return res
+//           .status(404)
+//           .json({ message: "Role not found or already deleted." });
+//       }
+
+//       res.json({ message: "Role deleted successfully." });
+//     }
+//   );
+// };

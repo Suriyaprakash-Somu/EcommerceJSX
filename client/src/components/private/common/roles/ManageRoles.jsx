@@ -3,9 +3,9 @@ import {
   rolesQueryKeys,
   fetchPaginatedRoles,
   deleteRole,
-} from "@/lib/roles/roles";
+} from "@/lib/common/roles";
 import DataTable from "@/components/ui/table/DataTable";
-import RoleForm from "@/components/private/roles/Roles";
+import RoleForm from "@/components/private/common/roles/Roles";
 
 const ManageRoles = () => {
   const [columns, setColumns] = useState([

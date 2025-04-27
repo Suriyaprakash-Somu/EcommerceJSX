@@ -11,14 +11,56 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as UnitsImport } from './routes/units'
 import { Route as RolesImport } from './routes/roles'
+import { Route as DepartmentsImport } from './routes/departments'
+import { Route as CategoryAttributeValueImport } from './routes/category-attribute-value'
+import { Route as CategoryImport } from './routes/category'
+import { Route as AttributesImport } from './routes/attributes'
+import { Route as AttributeValuesImport } from './routes/attribute-values'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
 
+const UnitsRoute = UnitsImport.update({
+  id: '/units',
+  path: '/units',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const RolesRoute = RolesImport.update({
   id: '/roles',
   path: '/roles',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DepartmentsRoute = DepartmentsImport.update({
+  id: '/departments',
+  path: '/departments',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const CategoryAttributeValueRoute = CategoryAttributeValueImport.update({
+  id: '/category-attribute-value',
+  path: '/category-attribute-value',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const CategoryRoute = CategoryImport.update({
+  id: '/category',
+  path: '/category',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AttributesRoute = AttributesImport.update({
+  id: '/attributes',
+  path: '/attributes',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AttributeValuesRoute = AttributeValuesImport.update({
+  id: '/attribute-values',
+  path: '/attribute-values',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -39,11 +81,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/attribute-values': {
+      id: '/attribute-values'
+      path: '/attribute-values'
+      fullPath: '/attribute-values'
+      preLoaderRoute: typeof AttributeValuesImport
+      parentRoute: typeof rootRoute
+    }
+    '/attributes': {
+      id: '/attributes'
+      path: '/attributes'
+      fullPath: '/attributes'
+      preLoaderRoute: typeof AttributesImport
+      parentRoute: typeof rootRoute
+    }
+    '/category': {
+      id: '/category'
+      path: '/category'
+      fullPath: '/category'
+      preLoaderRoute: typeof CategoryImport
+      parentRoute: typeof rootRoute
+    }
+    '/category-attribute-value': {
+      id: '/category-attribute-value'
+      path: '/category-attribute-value'
+      fullPath: '/category-attribute-value'
+      preLoaderRoute: typeof CategoryAttributeValueImport
+      parentRoute: typeof rootRoute
+    }
+    '/departments': {
+      id: '/departments'
+      path: '/departments'
+      fullPath: '/departments'
+      preLoaderRoute: typeof DepartmentsImport
+      parentRoute: typeof rootRoute
+    }
     '/roles': {
       id: '/roles'
       path: '/roles'
       fullPath: '/roles'
       preLoaderRoute: typeof RolesImport
+      parentRoute: typeof rootRoute
+    }
+    '/units': {
+      id: '/units'
+      path: '/units'
+      fullPath: '/units'
+      preLoaderRoute: typeof UnitsImport
       parentRoute: typeof rootRoute
     }
   }
@@ -53,37 +137,92 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/attribute-values': typeof AttributeValuesRoute
+  '/attributes': typeof AttributesRoute
+  '/category': typeof CategoryRoute
+  '/category-attribute-value': typeof CategoryAttributeValueRoute
+  '/departments': typeof DepartmentsRoute
   '/roles': typeof RolesRoute
+  '/units': typeof UnitsRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/attribute-values': typeof AttributeValuesRoute
+  '/attributes': typeof AttributesRoute
+  '/category': typeof CategoryRoute
+  '/category-attribute-value': typeof CategoryAttributeValueRoute
+  '/departments': typeof DepartmentsRoute
   '/roles': typeof RolesRoute
+  '/units': typeof UnitsRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/attribute-values': typeof AttributeValuesRoute
+  '/attributes': typeof AttributesRoute
+  '/category': typeof CategoryRoute
+  '/category-attribute-value': typeof CategoryAttributeValueRoute
+  '/departments': typeof DepartmentsRoute
   '/roles': typeof RolesRoute
+  '/units': typeof UnitsRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/roles'
+  fullPaths:
+    | '/'
+    | '/attribute-values'
+    | '/attributes'
+    | '/category'
+    | '/category-attribute-value'
+    | '/departments'
+    | '/roles'
+    | '/units'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/roles'
-  id: '__root__' | '/' | '/roles'
+  to:
+    | '/'
+    | '/attribute-values'
+    | '/attributes'
+    | '/category'
+    | '/category-attribute-value'
+    | '/departments'
+    | '/roles'
+    | '/units'
+  id:
+    | '__root__'
+    | '/'
+    | '/attribute-values'
+    | '/attributes'
+    | '/category'
+    | '/category-attribute-value'
+    | '/departments'
+    | '/roles'
+    | '/units'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AttributeValuesRoute: typeof AttributeValuesRoute
+  AttributesRoute: typeof AttributesRoute
+  CategoryRoute: typeof CategoryRoute
+  CategoryAttributeValueRoute: typeof CategoryAttributeValueRoute
+  DepartmentsRoute: typeof DepartmentsRoute
   RolesRoute: typeof RolesRoute
+  UnitsRoute: typeof UnitsRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AttributeValuesRoute: AttributeValuesRoute,
+  AttributesRoute: AttributesRoute,
+  CategoryRoute: CategoryRoute,
+  CategoryAttributeValueRoute: CategoryAttributeValueRoute,
+  DepartmentsRoute: DepartmentsRoute,
   RolesRoute: RolesRoute,
+  UnitsRoute: UnitsRoute,
 }
 
 export const routeTree = rootRoute
@@ -97,14 +236,38 @@ export const routeTree = rootRoute
       "filePath": "__root.jsx",
       "children": [
         "/",
-        "/roles"
+        "/attribute-values",
+        "/attributes",
+        "/category",
+        "/category-attribute-value",
+        "/departments",
+        "/roles",
+        "/units"
       ]
     },
     "/": {
       "filePath": "index.jsx"
     },
+    "/attribute-values": {
+      "filePath": "attribute-values.jsx"
+    },
+    "/attributes": {
+      "filePath": "attributes.jsx"
+    },
+    "/category": {
+      "filePath": "category.jsx"
+    },
+    "/category-attribute-value": {
+      "filePath": "category-attribute-value.jsx"
+    },
+    "/departments": {
+      "filePath": "departments.jsx"
+    },
     "/roles": {
       "filePath": "roles.jsx"
+    },
+    "/units": {
+      "filePath": "units.jsx"
     }
   }
 }
