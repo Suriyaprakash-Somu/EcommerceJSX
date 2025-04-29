@@ -1,112 +1,146 @@
-const db = require("../../../config/db");
-const { handleDatabaseError } = require("../../../utils/errorHandler");
+// controllers/private/common/departments.js
 
-// Get all departments
-exports.getAllDepartments = (req, res) => {
-  db.query("SELECT * FROM departments WHERE is_active = 1", (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
-};
+import { db } from "../../../config/db.js";
+import { departments } from "../../../schema/departments.js";
+import { eq, count } from "drizzle-orm";
+import { handleDatabaseError } from "../../../utils/errorHandler.js";
 
-// Get paginated departments
-exports.getPaginatedDepartments = (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+/**
+ * GET /departments
+ */
+export async function getAllDepartments(req, res) {
+  try {
+    const rows = await db
+      .select()
+      .from(departments)
+      .where(eq(departments.isActive, 1)); // use the JS‐property isActive
+    return res.json(rows); // will be [] if none
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
+
+/**
+ * GET /departments/paginated?page=1&limit=10
+ */
+export async function getPaginatedDepartments(req, res) {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
   const offset = (page - 1) * limit;
 
-  db.query(
-    "SELECT COUNT(*) AS count FROM departments WHERE is_active = 1",
-    (err, countResult) => {
-      if (err) return res.status(500).json({ error: err });
+  try {
+    // total count of active
+    const [{ count: rawCount }] = await db
+      .select({ count: count() })
+      .from(departments)
+      .where(eq(departments.isActive, 1));
 
-      const rowCount = countResult[0].count;
+    const rowCount = Number(rawCount);
 
-      db.query(
-        "SELECT department_id, department_name, is_active, department_description, department_id AS id FROM departments WHERE is_active = 1 LIMIT ? OFFSET ?",
-        [limit, offset],
-        (err, results) => {
-          if (err) return res.status(500).json({ error: err });
+    // fetch page
+    const rows = await db
+      .select({
+        department_id: departments.departmentId,
+        department_name: departments.departmentName,
+        is_active: departments.isActive,
+        department_description: departments.departmentDescription,
+        id: departments.departmentId, // alias for front end
+      })
+      .from(departments)
+      .where(eq(departments.isActive, 1))
+      .limit(limit)
+      .offset(offset);
 
-          res.json({
-            rows: results,
-            rowCount: rowCount,
-          });
-        }
-      );
+    return res.json({ rows, rowCount });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
+
+/**
+ * GET /departments/:id
+ */
+export async function getDepartmentById(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const [dept] = await db
+      .select()
+      .from(departments)
+      .where(eq(departments.departmentId, id));
+
+    if (!dept) {
+      return res.status(404).json({ error: "Department not found" });
     }
-  );
-};
+    return res.json(dept);
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-// Get department by ID
-exports.getDepartmentById = (req, res) => {
-  const { id } = req.params;
-  db.query(
-    "SELECT * FROM departments WHERE department_id = ?",
-    [id],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      if (results.length === 0)
-        return res.status(404).json({ error: "Department not found" });
-      res.json(results[0]);
-    }
-  );
-};
-
-// Create department
-exports.createDepartment = (req, res) => {
+/**
+ * POST /departments
+ */
+export async function createDepartment(req, res) {
   const { department_name, department_description } = req.body;
-  db.query(
-    "INSERT INTO departments (department_name, department_description) VALUES (?, ?)",
-    [department_name, department_description],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
+  try {
+    const result = await db
+      .insert(departments)
+      .values({
+        departmentName: department_name,
+        departmentDescription: department_description,
+      })
+      .execute();
 
-      res.status(201).json({
-        message: "Department created successfully!",
-        departmentId: results.insertId,
-      });
-    }
-  );
-};
+    return res.status(201).json({
+      message: "Department created successfully!",
+      departmentId: result.insertId,
+    });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-// Update department
-exports.updateDepartment = (req, res) => {
-  const { id } = req.params;
+/**
+ * PUT /departments/:id
+ */
+export async function updateDepartment(req, res) {
+  const id = parseInt(req.params.id, 10);
   const { department_name, department_description } = req.body;
+  try {
+    const result = await db
+      .update(departments)
+      .set({
+        departmentName: department_name,
+        departmentDescription: department_description,
+      })
+      .where(eq(departments.departmentId, id))
+      .execute();
 
-  db.query(
-    "UPDATE departments SET department_name = ?, department_description = ? WHERE department_id = ?",
-    [department_name, department_description, id],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
-
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ message: "Department not found." });
-      }
-
-      res.json({ message: "Department updated successfully." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Department not found." });
     }
-  );
-};
+    return res.json({ message: "Department updated successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-// Delete department
-exports.deleteDepartment = (req, res) => {
-  const { id } = req.params;
+/**
+ * DELETE /departments/:id
+ */
+export async function deleteDepartment(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const result = await db
+      .delete(departments)
+      .where(eq(departments.departmentId, id))
+      .execute();
 
-  db.query(
-    "DELETE FROM departments WHERE department_id = ?",
-    [id],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
-
-      if (results.affectedRows === 0) {
-        return res
-          .status(404)
-          .json({ message: "Department not found or already deleted." });
-      }
-
-      res.json({ message: "Department deleted successfully." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Department not found." });
     }
-  );
-};
+    return res.json({ message: "Department deleted successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}

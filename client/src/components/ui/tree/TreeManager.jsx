@@ -12,6 +12,21 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { motion } from "framer-motion";
+
+const containerVariants = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: -10 },
+  show: { opacity: 1, y: 0 },
+};
 
 export default function TreeManager({
   title = "Manage Tree",
@@ -27,9 +42,9 @@ export default function TreeManager({
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(null);
-  const [parentId, setParentId] = useState(null); // for root or child
+  const [parentId, setParentId] = useState(null);
 
-  const { data, isLoading, error } = useAppQuery(tag, fetchTree);
+  const { data = [], isLoading, error } = useAppQuery(tag, fetchTree);
 
   const handleAddRootClick = () => {
     setParentId(null);
@@ -40,15 +55,14 @@ export default function TreeManager({
   if (isLoading)
     return (
       <div className="p-4 bg-white rounded-lg shadow-sm max-w-2xl mx-auto flex justify-center">
-        <div className="animate-pulse text-gray-500">Loading tree...</div>
+        <div className="animate-pulse text-gray-500">Loading tree…</div>
       </div>
     );
-
   if (error)
     return (
       <div className="p-4 bg-white rounded-lg shadow-sm max-w-2xl mx-auto">
         <div className="bg-red-50 p-3 rounded-md text-red-500 border border-red-100 text-sm">
-          Error loading tree: {error.message || "Please try again later"}
+          Error loading tree: {error.message || "Try again later"}
         </div>
       </div>
     );
@@ -61,42 +75,47 @@ export default function TreeManager({
           onClick={handleAddRootClick}
           variant={modalOpen && modalType === "add" ? "outline" : "default"}
           size="sm"
-          className="transition-all flex items-center gap-1 text-sm"
+          className="flex items-center gap-1 text-sm"
         >
           <FiPlus size={16} />
           {modalOpen && modalType === "add" ? "Cancel" : "Add Root"}
         </Button>
       </div>
 
-      <div className="mt-2">
-        {data?.length ? (
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="mt-2"
+      >
+        {data.length > 0 ? (
           data.map((node) => (
-            <TreeNode
-              key={node[idKey]}
-              node={node}
-              idKey={idKey}
-              nameKey={nameKey}
-              parentIdKey={parentIdKey}
-              createNode={createNode}
-              updateNode={updateNode}
-              deleteNode={deleteNode}
-              FormComponent={FormComponent}
-              tag={tag}
-              openModal={(type, parent) => {
-                setModalType(type);
-                setParentId(parent);
-                setModalOpen(true);
-              }}
-            />
+            <motion.div key={node[idKey]} variants={itemVariants}>
+              <TreeNode
+                node={node}
+                idKey={idKey}
+                nameKey={nameKey}
+                parentIdKey={parentIdKey}
+                createNode={createNode}
+                updateNode={updateNode}
+                deleteNode={deleteNode}
+                FormComponent={FormComponent}
+                tag={tag}
+                openModal={(type, parent) => {
+                  setModalType(type);
+                  setParentId(parent);
+                  setModalOpen(true);
+                }}
+              />
+            </motion.div>
           ))
         ) : (
           <div className="text-center p-6 text-gray-400 bg-gray-50 rounded-md text-sm">
             No items found. Create a root item to get started.
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {/* Add Root Dialog */}
       <Dialog
         open={modalOpen && modalType === "add"}
         onOpenChange={setModalOpen}

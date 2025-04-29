@@ -1,123 +1,126 @@
-const db = require("../../../config/db");
-const { handleDatabaseError } = require("../../../utils/errorHandler");
+// controllers/private/common/roles.js
 
-exports.getAllRoles = (req, res) => {
-  db.query("SELECT * FROM roles WHERE is_active = 1", (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
-};
+import { db } from "../../../config/db.js";
+import { roles } from "../../../schema/roles.js";
+import { eq, count } from "drizzle-orm";
+import { handleDatabaseError } from "../../../utils/errorHandler.js";
 
-exports.getPaginatedRoles = (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+// GET /roles
+export async function getAllRoles(req, res) {
+  try {
+    const rows = await db.select().from(roles).where(eq(roles.isActive, 1)); // use roles.isActive
+    return res.json(rows);
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
+
+// GET /roles/paginated
+export async function getPaginatedRoles(req, res) {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
   const offset = (page - 1) * limit;
 
-  db.query(
-    "SELECT COUNT(*) AS count FROM roles WHERE is_active = 1",
-    (err, countResult) => {
-      if (err) return res.status(500).json({ error: err });
+  try {
+    // total count
+    const [{ count: rawCount }] = await db
+      .select({ count: count() })
+      .from(roles)
+      .where(eq(roles.isActive, 1)); // use roles.isActive
 
-      const rowCount = countResult[0].count;
+    const rowCount = Number(rawCount);
 
-      db.query(
-        "SELECT role_id,role_name,is_active,role_description, role_id AS id FROM roles WHERE is_active = 1 LIMIT ? OFFSET ?",
-        [limit, offset],
-        (err, results) => {
-          if (err) return res.status(500).json({ error: err });
+    // page of rows
+    const rows = await db
+      .select({
+        role_id: roles.roleId, // ← correct
+        role_name: roles.roleName, // ← correct
+        is_active: roles.isActive, // ← correct
+        role_description: roles.roleDescription, // ← correct
+        id: roles.roleId, // ← correct
+      })
+      .from(roles)
+      .where(eq(roles.isActive, 1)) // ← correct
+      .limit(limit)
+      .offset(offset);
 
-          res.json({
-            rows: results,
-            rowCount: rowCount,
-          });
-        }
-      );
-    }
-  );
-};
+    return res.json({ rows, rowCount });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.getRoleById = (req, res) => {
-  const { id } = req.params;
-  db.query("SELECT * FROM roles WHERE role_id = ?", [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    if (results.length === 0)
-      return res.status(404).json({ error: "Role not found" });
-    res.json(results[0]);
-  });
-};
+// GET /roles/:id
+export async function getRoleById(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const [role] = await db.select().from(roles).where(eq(roles.roleId, id)); // ← use roles.roleId
 
-exports.createRole = (req, res) => {
+    if (!role) return res.status(404).json({ error: "Role not found" });
+    return res.json(role);
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
+
+// POST /roles
+export async function createRole(req, res) {
   const { role_name, role_description } = req.body;
-  db.query(
-    "INSERT INTO roles (role_name, role_description) VALUES (?, ?)",
-    [role_name, role_description],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
+  try {
+    const result = await db
+      .insert(roles)
+      .values({
+        roleName: role_name,
+        roleDescription: role_description,
+      })
+      .execute();
 
-      res.status(201).json({
-        message: "Role created successfully!",
-        roleId: results.insertId,
-      });
-    }
-  );
-};
+    return res.status(201).json({
+      message: "Role created successfully!",
+      roleId: result.insertId,
+    });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.updateRole = (req, res) => {
-  const { id } = req.params;
+// PUT /roles/:id
+export async function updateRole(req, res) {
+  const id = parseInt(req.params.id, 10);
   const { role_name, role_description } = req.body;
+  try {
+    const result = await db
+      .update(roles)
+      .set({
+        roleName: role_name,
+        roleDescription: role_description,
+      })
+      .where(eq(roles.roleId, id)) // ← use roles.roleId
+      .execute();
 
-  db.query(
-    "UPDATE roles SET role_name = ?, role_description = ? WHERE role_id = ?",
-    [role_name, role_description, id],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
-
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ message: "Role not found." });
-      }
-
-      res.json({ message: "Role updated successfully." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Role not found." });
     }
-  );
-};
+    return res.json({ message: "Role updated successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.deleteRole = (req, res) => {
-  const { id } = req.params;
+// DELETE /roles/:id
+export async function deleteRole(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const result = await db
+      .delete(roles)
+      .where(eq(roles.roleId, id)) // ← use roles.roleId
+      .execute();
 
-  db.query(
-    "DELETE FROM roles WHERE role_id = ?",
-    [id],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
-
-      if (results.affectedRows === 0) {
-        return res
-          .status(404)
-          .json({ message: "Role not found or already deleted." });
-      }
-
-      res.json({ message: "Role deleted successfully." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Role not found." });
     }
-  );
-};
-
-
-// exports.deleteRole = (req, res) => {
-//   const { id } = req.params;
-
-//   db.query(
-//     "UPDATE roles SET is_active = 0 WHERE role_id = ?",
-//     [id],
-//     (err, results) => {
-//       if (err) return handleDatabaseError(res, err);
-
-//       if (results.affectedRows === 0) {
-//         return res
-//           .status(404)
-//           .json({ message: "Role not found or already deleted." });
-//       }
-
-//       res.json({ message: "Role deleted successfully." });
-//     }
-//   );
-// };
+    return res.json({ message: "Role deleted successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}

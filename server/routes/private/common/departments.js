@@ -1,17 +1,13 @@
-const express = require("express");
+import express from "express";
+import {getAllDepartments,getPaginatedDepartments,getDepartmentById,createDepartment,updateDepartment,deleteDepartment} from "../../../controllers/private/common/departments.js";
+
 const router = express.Router();
-const departmentsController = require("../../../controllers/private/common/departments"); // <-- departments controller
 
-router.get("/", departmentsController.getAllDepartments);
+router.get("/",    getAllDepartments);
+router.get("/paginated", getPaginatedDepartments);
+router.get("/:id", getDepartmentById);
+router.post("/",   createDepartment);
+router.put("/:id", updateDepartment);
+router.delete("/:id", deleteDepartment);
 
-router.get("/paginated", departmentsController.getPaginatedDepartments);
-
-router.get("/:id", departmentsController.getDepartmentById);
-
-router.post("/", departmentsController.createDepartment);
-
-router.put("/:id", departmentsController.updateDepartment);
-
-router.delete("/:id", departmentsController.deleteDepartment);
-
-module.exports = router;
+export default router;

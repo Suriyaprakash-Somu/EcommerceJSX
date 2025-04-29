@@ -1,26 +1,24 @@
-const express = require("express");
+// routes/private/product/category.js
+
+import express from "express";
+import {
+  getAllCategories,
+  getPaginatedCategories,
+  getCategoryById,
+  getCategoryTree,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from "../../../controllers/private/product/category.js";
+
 const router = express.Router();
-const categoriesController = require("../../../controllers/private/product/category");
 
-// List all categories (flat)
-router.get("/all", categoriesController.getAllCategories);
+router.get("/all", getAllCategories);
+router.get("/paginated", getPaginatedCategories);
+router.get("/tree", getCategoryTree);
+router.get("/:id", getCategoryById);
+router.post("/", createCategory);
+router.put("/:id", updateCategory);
+router.delete("/:id", deleteCategory);
 
-// Get paginated list of categories
-router.get("/paginated", categoriesController.getPaginatedCategories);
-
-// Get tree structure (for TreeManager)
-router.get("/tree", categoriesController.getCategoryTree);
-
-// Get one category by ID
-router.get("/:id", categoriesController.getCategoryById);
-
-// Create a new category
-router.post("/", categoriesController.createCategory);
-
-// Update an existing category
-router.put("/:id", categoriesController.updateCategory);
-
-// Delete a category
-router.delete("/:id", categoriesController.deleteCategory);
-
-module.exports = router;
+export default router;

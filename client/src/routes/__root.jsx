@@ -2,7 +2,6 @@ import * as React from "react";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner"; // import here
-
 const queryClient = new QueryClient();
 
 export const Route = createRootRoute({

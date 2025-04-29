@@ -34,8 +34,6 @@ const attributeSchema = z.object({
 const inputTypes = [
   { label: "Text", value: "text" },
   { label: "Number", value: "number" },
-  { label: "Select", value: "select" },
-  { label: "MultiSelect", value: "multiselect" },
   { label: "Boolean", value: "boolean" },
   { label: "Color", value: "color" },
   { label: "Date", value: "date" },

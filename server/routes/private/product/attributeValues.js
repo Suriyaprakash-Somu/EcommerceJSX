@@ -1,12 +1,22 @@
-const express = require("express");
+// routes/private/product/attributeValues.js
+
+import express from "express";
+import {
+  getAllAttributeValues,
+  getPaginatedAttributeValues,
+  getAttributeValueById,
+  createAttributeValue,
+  updateAttributeValue,
+  deleteAttributeValue,
+} from "../../../controllers/private/product/attributeValues.js";
+
 const router = express.Router();
-const attributeValuesController = require("../../../controllers/private/product/attributeValues");
 
-router.get("/all", attributeValuesController.getAllAttributeValues);
-router.get("/paginated", attributeValuesController.getPaginatedAttributeValues);
-router.get("/:id", attributeValuesController.getAttributeValueById);
-router.post("/", attributeValuesController.createAttributeValue);
-router.put("/:id", attributeValuesController.updateAttributeValue);
-router.delete("/:id", attributeValuesController.deleteAttributeValue);
+router.get("/all", getAllAttributeValues);
+router.get("/paginated", getPaginatedAttributeValues);
+router.get("/:id", getAttributeValueById);
+router.post("/", createAttributeValue);
+router.put("/:id", updateAttributeValue);
+router.delete("/:id", deleteAttributeValue);
 
-module.exports = router;
+export default router;

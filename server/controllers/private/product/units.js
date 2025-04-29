@@ -1,95 +1,116 @@
-const db = require("../../../config/db");
-const { handleDatabaseError } = require("../../../utils/errorHandler");
+// controllers/private/common/units.js
 
-exports.getAllUnits = (req, res) => {
-  db.query("SELECT * FROM units", (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
-};
+import { db } from "../../../config/db.js";
+import { units } from "../../../schema/units.js";
+import { eq, count } from "drizzle-orm";
+import { handleDatabaseError } from "../../../utils/errorHandler.js";
 
-exports.getPaginatedUnits = (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+export async function getAllUnits(req, res) {
+  try {
+    const rows = await db.select().from(units);
+    return res.json(rows);
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
+
+export async function getPaginatedUnits(req, res) {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
   const offset = (page - 1) * limit;
 
-  db.query("SELECT COUNT(*) AS count FROM units", (err, countResult) => {
-    if (err) return res.status(500).json({ error: err });
+  try {
+    const [{ count: rawCount }] = await db
+      .select({ count: count() })
+      .from(units);
+    const rowCount = Number(rawCount);
 
-    const rowCount = countResult[0].count;
+    const rows = await db
+      .select({
+        unit_id: units.unitId,
+        unit_name: units.unitName,
+        unit_abbreviation: units.unitAbbreviation,
+        unit_symbol: units.unitSymbol,
+        id: units.unitId,
+      })
+      .from(units)
+      .limit(limit)
+      .offset(offset);
 
-    db.query(
-      "SELECT unit_id, unit_name, unit_abbreviation, unit_symbol, unit_id AS id FROM units LIMIT ? OFFSET ?",
-      [limit, offset],
-      (err, results) => {
-        if (err) return res.status(500).json({ error: err });
+    return res.json({ rows, rowCount });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-        res.json({
-          rows: results,
-          rowCount: rowCount,
-        });
-      }
-    );
-  });
-};
+export async function getUnitById(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const [unit] = await db.select().from(units).where(eq(units.unitId, id));
 
-exports.getUnitById = (req, res) => {
-  const { id } = req.params;
-  db.query("SELECT * FROM units WHERE unit_id = ?", [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    if (results.length === 0)
+    if (!unit) {
       return res.status(404).json({ error: "Unit not found" });
-    res.json(results[0]);
-  });
-};
+    }
+    return res.json(unit);
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.createUnit = (req, res) => {
+export async function createUnit(req, res) {
   const { unit_name, unit_abbreviation, unit_symbol } = req.body;
-  db.query(
-    "INSERT INTO units (unit_name, unit_abbreviation, unit_symbol) VALUES (?, ?, ?)",
-    [unit_name, unit_abbreviation, unit_symbol],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
+  try {
+    const result = await db
+      .insert(units)
+      .values({
+        unitName: unit_name,
+        unitAbbreviation: unit_abbreviation,
+        unitSymbol: unit_symbol,
+      })
+      .execute();
 
-      res.status(201).json({
-        message: "Unit created successfully!",
-        unitId: results.insertId,
-      });
-    }
-  );
-};
+    return res.status(201).json({
+      message: "Unit created successfully!",
+      unitId: result.insertId,
+    });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.updateUnit = (req, res) => {
-  const { id } = req.params;
+export async function updateUnit(req, res) {
+  const id = parseInt(req.params.id, 10);
   const { unit_name, unit_abbreviation, unit_symbol } = req.body;
+  try {
+    const result = await db
+      .update(units)
+      .set({
+        unitName: unit_name,
+        unitAbbreviation: unit_abbreviation,
+        unitSymbol: unit_symbol,
+      })
+      .where(eq(units.unitId, id))
+      .execute();
 
-  db.query(
-    "UPDATE units SET unit_name = ?, unit_abbreviation = ?, unit_symbol = ? WHERE unit_id = ?",
-    [unit_name, unit_abbreviation, unit_symbol, id],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
-
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ message: "Unit not found." });
-      }
-
-      res.json({ message: "Unit updated successfully." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Unit not found." });
     }
-  );
-};
+    return res.json({ message: "Unit updated successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.deleteUnit = (req, res) => {
-  const { id } = req.params;
+export async function deleteUnit(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const result = await db.delete(units).where(eq(units.unitId, id)).execute();
 
-  db.query("DELETE FROM units WHERE unit_id = ?", [id], (err, results) => {
-    if (err) return handleDatabaseError(res, err);
-
-    if (results.affectedRows === 0) {
-      return res
-        .status(404)
-        .json({ message: "Unit not found or already deleted." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Unit not found." });
     }
-
-    res.json({ message: "Unit deleted successfully." });
-  });
-};
+    return res.json({ message: "Unit deleted successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}

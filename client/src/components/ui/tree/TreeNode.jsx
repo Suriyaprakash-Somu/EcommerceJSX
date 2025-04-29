@@ -16,14 +16,15 @@ import {
   FiPlus,
   FiEdit2,
   FiTrash2,
+  FiMoreVertical,
 } from "react-icons/fi";
 import { ImSpinner2 } from "react-icons/im";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function TreeNode({
   node,
   idKey,
   nameKey,
-  parentIdKey,
   createNode,
   updateNode,
   deleteNode,
@@ -31,13 +32,15 @@ export default function TreeNode({
   tag = [],
   openModal,
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [modalType, setModalType] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  const nodeId = node?.[idKey];
-  const nodeName = node?.[nameKey];
-  const children = node?.children || [];
+  const nodeId = node[idKey];
+  const nodeName = node[nameKey];
+  const children = node.children || [];
 
   const deleteMutation = useAppMutation(() => deleteNode(nodeId), {
     invalidateQueries: Array.isArray(tag) ? tag : [tag],
@@ -50,73 +53,121 @@ export default function TreeNode({
 
   return (
     <div className="ml-3 border-l border-gray-100 pl-3 my-1">
-      <div className="flex items-center justify-between py-1.5 hover:bg-gray-50 rounded px-2 group transition-colors">
+      <div className="flex items-center py-1.5 hover:bg-gray-50 rounded px-2">
+        {/* arrow + label */}
         <div
-          className="flex items-center gap-2 cursor-pointer text-gray-700 flex-grow"
-          onClick={() => setModalType((prev) => !prev)}
+          className="flex items-center gap-2 cursor-pointer text-gray-700"
+          onClick={() => setExpanded((e) => !e)}
         >
           {children.length > 0 ? (
-            modalType ? (
-              <FiChevronDown size={14} className="text-gray-400" />
+            expanded ? (
+              <FiChevronDown className="text-gray-400" />
             ) : (
-              <FiChevronRight size={14} className="text-gray-400" />
+              <FiChevronRight className="text-gray-400" />
             )
           ) : (
-            <span className="w-3.5" />
+            <span className="w-4" />
           )}
-          <span className="select-none text-sm">{nodeName}</span>
+          <span className="select-none">{nodeName}</span>
         </div>
 
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              openModal("add", nodeId);
-            }}
-            title="Add Child"
-            className="hover:text-blue-600 p-1 rounded hover:bg-blue-50 text-gray-500"
-          >
-            <FiPlus size={14} />
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setModalType("edit");
-              setModalOpen(true);
-            }}
-            title="Edit"
-            className="hover:text-amber-600 p-1 rounded hover:bg-amber-50 text-gray-500"
-          >
-            <FiEdit2 size={14} />
-          </button>
-
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setConfirmDeleteOpen(true);
-            }}
-            title="Delete"
-            disabled={deleteMutation.isPending}
-            className="hover:text-red-600 p-1 rounded hover:bg-red-50 text-gray-500"
-          >
-            {deleteMutation.isPending ? (
-              <ImSpinner2 size={14} className="animate-spin" />
-            ) : (
-              <FiTrash2 size={14} />
+        {/* actions */}
+        <div className="flex items-center ml-auto">
+          <AnimatePresence initial={false}>
+            {menuOpen && (
+              <motion.div
+                className="flex items-center gap-2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ type: "tween", duration: 0.2 }}
+              >
+                <button
+                  onClick={() => {
+                    openModal("add", nodeId);
+                    setMenuOpen(false);
+                  }}
+                  className="p-1 rounded hover:bg-blue-50 text-blue-600"
+                  title="Add Child"
+                >
+                  <FiPlus />
+                </button>
+                <button
+                  onClick={() => {
+                    setModalType("edit");
+                    setModalOpen(true);
+                    setMenuOpen(false);
+                  }}
+                  className="p-1 rounded hover:bg-amber-50 text-amber-600"
+                  title="Edit"
+                >
+                  <FiEdit2 />
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmDeleteOpen(true);
+                    setMenuOpen(false);
+                  }}
+                  className="p-1 rounded hover:bg-red-50 text-red-600"
+                  disabled={deleteMutation.isPending}
+                  title="Delete"
+                >
+                  {deleteMutation.isPending ? (
+                    <ImSpinner2 className="animate-spin" />
+                  ) : (
+                    <FiTrash2 />
+                  )}
+                </button>
+              </motion.div>
             )}
+          </AnimatePresence>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen((o) => !o);
+            }}
+            className="p-1 rounded hover:bg-gray-100 text-gray-500 ml-2"
+            title="Actions"
+          >
+            <FiMoreVertical />
           </button>
         </div>
       </div>
 
-      {modalType && modalOpen && (
+      {/* children with motion */}
+      <AnimatePresence initial={false}>
+        {expanded && children.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {children.map((child) => (
+              <TreeNode
+                key={child[idKey]}
+                node={child}
+                idKey={idKey}
+                nameKey={nameKey}
+                createNode={createNode}
+                updateNode={updateNode}
+                deleteNode={deleteNode}
+                FormComponent={FormComponent}
+                tag={tag}
+                openModal={openModal}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit dialog */}
+      {modalType === "edit" && (
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit {nodeName}</DialogTitle>
-              <DialogDescription>
-                Update this node's information
-              </DialogDescription>
+              <DialogDescription>Update this node’s info</DialogDescription>
             </DialogHeader>
             <FormComponent
               updateNode={updateNode}
@@ -132,7 +183,7 @@ export default function TreeNode({
         </Dialog>
       )}
 
-      {/* Confirm Delete Dialog */}
+      {/* Delete confirm */}
       <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
         <DialogContent>
           <DialogHeader>
@@ -151,26 +202,6 @@ export default function TreeNode({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {modalType && children.length > 0 && (
-        <div>
-          {children.map((child) => (
-            <TreeNode
-              key={child[idKey]}
-              node={child}
-              idKey={idKey}
-              nameKey={nameKey}
-              parentIdKey={parentIdKey}
-              createNode={createNode}
-              updateNode={updateNode}
-              deleteNode={deleteNode}
-              FormComponent={FormComponent}
-              tag={tag}
-              openModal={openModal}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

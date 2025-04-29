@@ -1,17 +1,22 @@
-const express = require("express");
+// routes/private/product/units.js
+
+import express from "express";
+import {
+  getAllUnits,
+  getPaginatedUnits,
+  getUnitById,
+  createUnit,
+  updateUnit,
+  deleteUnit,
+} from "../../../controllers/private/product/units.js";
+
 const router = express.Router();
-const unitsController = require("../../../controllers/private/product/units");
 
-router.get("/all", unitsController.getAllUnits);
+router.get("/all", getAllUnits);
+router.get("/paginated", getPaginatedUnits);
+router.get("/:id", getUnitById);
+router.post("/", createUnit);
+router.put("/:id", updateUnit);
+router.delete("/:id", deleteUnit);
 
-router.get("/paginated", unitsController.getPaginatedUnits);
-
-router.get("/:id", unitsController.getUnitById);
-
-router.post("/", unitsController.createUnit);
-
-router.put("/:id", unitsController.updateUnit);
-
-router.delete("/:id", unitsController.deleteUnit);
-
-module.exports = router;
+export default router;

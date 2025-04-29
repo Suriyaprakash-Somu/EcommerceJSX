@@ -1,30 +1,22 @@
-const express = require("express");
+// routes/private/product/categoryAttributeValues.js
+
+import express from "express";
+import {
+  getAllCategoryAttributeValues,
+  getCategoryAttributeValueById,
+  getPaginatedCategoryAttributeValues,
+  createCategoryAttributeValue,
+  updateCategoryAttributeValue,
+  deleteCategoryAttributeValue,
+} from "../../../controllers/private/product/categoryAttributeValues.js";
+
 const router = express.Router();
-const categoryAttributeValuesController = require("../../../controllers/private/product/categoryAttributeValues");
 
-router.get(
-  "/all",
-  categoryAttributeValuesController.getAllCategoryAttributeValues
-);
-router.get(
-  "/paginated",
-  categoryAttributeValuesController.getPaginatedCategoryAttributeValues
-);
-router.get(
-  "/:id",
-  categoryAttributeValuesController.getCategoryAttributeValueById
-);
-router.post(
-  "/",
-  categoryAttributeValuesController.createCategoryAttributeValue
-);
-router.put(
-  "/:id",
-  categoryAttributeValuesController.updateCategoryAttributeValue
-);
-router.delete(
-  "/:id",
-  categoryAttributeValuesController.deleteCategoryAttributeValue
-);
+router.get("/all", getAllCategoryAttributeValues);
+router.get("/paginated", getPaginatedCategoryAttributeValues);
+router.get("/:id", getCategoryAttributeValueById);
+router.post("/", createCategoryAttributeValue);
+router.put("/:id", updateCategoryAttributeValue);
+router.delete("/:id", deleteCategoryAttributeValue);
 
-module.exports = router;
+export default router;

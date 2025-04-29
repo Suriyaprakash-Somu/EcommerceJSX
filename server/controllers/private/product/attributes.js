@@ -1,103 +1,127 @@
-const db = require("../../../config/db");
-const { handleDatabaseError } = require("../../../utils/errorHandler");
+// controllers/private/product/attributes.js
 
-exports.getAllAttributes = (req, res) => {
-  db.query("SELECT * FROM attributes", (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
-};
+import { db } from "../../../config/db.js";
+import { attributes } from "../../../schema/attributes.js";
+import { eq, count } from "drizzle-orm";
+import { handleDatabaseError } from "../../../utils/errorHandler.js";
 
-exports.getPaginatedAttributes = (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+// GET /attributes/all
+export async function getAllAttributes(req, res) {
+  try {
+    const rows = await db.select().from(attributes);
+    return res.json(rows);
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
+
+// GET /attributes/paginated?page=1&limit=10
+export async function getPaginatedAttributes(req, res) {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
   const offset = (page - 1) * limit;
 
-  db.query("SELECT COUNT(*) AS count FROM attributes", (err, countResult) => {
-    if (err) return res.status(500).json({ error: err });
+  try {
+    // total count
+    const [{ count: rawCount }] = await db
+      .select({ count: count() })
+      .from(attributes);
+    const rowCount = Number(rawCount);
 
-    const rowCount = countResult[0].count;
+    // page of rows
+    const rows = await db
+      .select({
+        attribute_id: attributes.attributeId,
+        attribute_name: attributes.attributeName,
+        input_type: attributes.inputType,
+        id: attributes.attributeId, // alias
+      })
+      .from(attributes)
+      .limit(limit)
+      .offset(offset);
 
-    db.query(
-      "SELECT attribute_id, attribute_name, input_type, attribute_id AS id FROM attributes LIMIT ? OFFSET ?",
-      [limit, offset],
-      (err, results) => {
-        if (err) return res.status(500).json({ error: err });
+    return res.json({ rows, rowCount });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-        res.json({
-          rows: results,
-          rowCount: rowCount,
-        });
-      }
-    );
-  });
-};
+// GET /attributes/:id
+export async function getAttributeById(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const [attr] = await db
+      .select()
+      .from(attributes)
+      .where(eq(attributes.attributeId, id));
 
-exports.getAttributeById = (req, res) => {
-  const { id } = req.params;
-  db.query(
-    "SELECT * FROM attributes WHERE attribute_id = ?",
-    [id],
-    (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      if (results.length === 0)
-        return res.status(404).json({ error: "Attribute not found" });
-      res.json(results[0]);
+    if (!attr) {
+      return res.status(404).json({ error: "Attribute not found" });
     }
-  );
-};
+    return res.json(attr);
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.createAttribute = (req, res) => {
+// POST /attributes
+export async function createAttribute(req, res) {
   const { attribute_name, input_type } = req.body;
-  db.query(
-    "INSERT INTO attributes (attribute_name, input_type) VALUES (?, ?)",
-    [attribute_name, input_type],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
+  try {
+    const result = await db
+      .insert(attributes)
+      .values({
+        attributeName: attribute_name,
+        inputType: input_type,
+      })
+      .execute();
 
-      res.status(201).json({
-        message: "Attribute created successfully!",
-        attributeId: results.insertId,
-      });
-    }
-  );
-};
+    return res.status(201).json({
+      message: "Attribute created successfully!",
+      attributeId: result.insertId,
+    });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.updateAttribute = (req, res) => {
-  const { id } = req.params;
+// PUT /attributes/:id
+export async function updateAttribute(req, res) {
+  const id = parseInt(req.params.id, 10);
   const { attribute_name, input_type } = req.body;
+  try {
+    const result = await db
+      .update(attributes)
+      .set({
+        attributeName: attribute_name,
+        inputType: input_type,
+      })
+      .where(eq(attributes.attributeId, id))
+      .execute();
 
-  db.query(
-    "UPDATE attributes SET attribute_name = ?, input_type = ? WHERE attribute_id = ?",
-    [attribute_name, input_type, id],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
-
-      if (results.affectedRows === 0) {
-        return res.status(404).json({ message: "Attribute not found." });
-      }
-
-      res.json({ message: "Attribute updated successfully." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Attribute not found." });
     }
-  );
-};
+    return res.json({ message: "Attribute updated successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}
 
-exports.deleteAttribute = (req, res) => {
-  const { id } = req.params;
+// DELETE /attributes/:id
+export async function deleteAttribute(req, res) {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const result = await db
+      .delete(attributes)
+      .where(eq(attributes.attributeId, id))
+      .execute();
 
-  db.query(
-    "DELETE FROM attributes WHERE attribute_id = ?",
-    [id],
-    (err, results) => {
-      if (err) return handleDatabaseError(res, err);
-
-      if (results.affectedRows === 0) {
-        return res
-          .status(404)
-          .json({ message: "Attribute not found or already deleted." });
-      }
-
-      res.json({ message: "Attribute deleted successfully." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Attribute not found." });
     }
-  );
-};
+    return res.json({ message: "Attribute deleted successfully." });
+  } catch (err) {
+    return handleDatabaseError(res, err);
+  }
+}

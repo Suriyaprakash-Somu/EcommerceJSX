@@ -106,7 +106,7 @@ export default function CategoryAttributeValueForm({
     selectedAttributeId || initialAttributeIdRef.current;
 
   const filteredAttributeValues = attributeValuesData.filter(
-    (v) => String(v.attribute_id) === attributeIdForFiltering
+    (v) => String(v.attributeId) === attributeIdForFiltering
   );
 
   const onSubmit = (data) => {
@@ -145,8 +145,8 @@ export default function CategoryAttributeValueForm({
               </SelectTrigger>
               <SelectContent>
                 {categoriesData.map((c) => (
-                  <SelectItem key={c.category_id} value={String(c.category_id)}>
-                    {c.category_name}
+                  <SelectItem key={c._i} value={String(c.categoryId)}>
+                    {c.categoryName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -173,10 +173,10 @@ export default function CategoryAttributeValueForm({
               <SelectContent>
                 {attributesData.map((a) => (
                   <SelectItem
-                    key={a.attribute_id}
-                    value={String(a.attribute_id)}
+                    key={a.attributeId}
+                    value={String(a.attributeId)}
                   >
-                    {a.attribute_name}
+                    {a.attributeName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -207,8 +207,8 @@ export default function CategoryAttributeValueForm({
               <SelectContent>
                 {filteredAttributeValues.length ? (
                   filteredAttributeValues.map((v) => (
-                    <SelectItem key={v.value_id} value={String(v.value_id)}>
-                      {v.value_text}
+                    <SelectItem key={v.valueId} value={String(v.valueId)}>
+                      {v.valueText}
                     </SelectItem>
                   ))
                 ) : (

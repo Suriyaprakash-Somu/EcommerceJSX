@@ -42,10 +42,18 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
     [editData]
   );
 
+  const { data: unitsData = [], isLoading: unitsLoading } = useAppQuery(
+    unitsQueryKeys.all,
+    fetchAllUnits
+  );
+  const { data: attributesData = [], isLoading: attributeLoading } =
+    useAppQuery(attributesQueryKeys.all, fetchAllAttributes);
+
   const {
     register,
     handleSubmit,
     control,
+    getValues,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(attributeValueSchema),
@@ -61,15 +69,6 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
     {
       invalidateQueries: [attributeValuesQueryKeys.tag],
     }
-  );
-
-  const { data: unitsData = [] } = useAppQuery(
-    unitsQueryKeys.all,
-    fetchAllUnits
-  );
-  const { data: attributesData = [] } = useAppQuery(
-    attributesQueryKeys.all,
-    fetchAllAttributes
   );
 
   const onSubmit = (data) => {
@@ -96,7 +95,9 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
       <div className="text-center text-gray-500 p-4">Loading attributes…</div>
     );
   }
-
+  if (unitsLoading || attributeLoading) {
+    return <div className="text-center text-gray-500 p-4">Loading units…</div>;
+  }
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -115,10 +116,10 @@ export default function AttributeValues({ type = "add", editData, onClose }) {
               <SelectContent>
                 {attributesData.map((attribute) => (
                   <SelectItem
-                    key={attribute.attribute_id}
-                    value={String(attribute.attribute_id)}
+                    key={attribute.attributeId}
+                    value={String(attribute.attributeId)}
                   >
-                    {attribute.attribute_name}
+                    {attribute.attributeName}
                   </SelectItem>
                 ))}
               </SelectContent>
